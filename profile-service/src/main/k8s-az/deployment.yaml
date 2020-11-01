@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-profile-deployment
+  labels:
+    app: ProfileApplication
+spec:
+  selector:
+    matchLabels:
+      app: ProfileApplication
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: ProfileApplication
+        tier: web
+    spec:
+      containers:
+      - name: profile-application
+        image: zhaoxuanacr.azurecr.io/task5/profileservice:latest
+        resources: 
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: azure-spring-profile-config
+
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: spring-profile-autoscaling
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: spring-profile-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

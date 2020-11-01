@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-chat-deployment
+  labels:
+    app: ChatApplication
+spec:
+  selector:
+    matchLabels:
+      app: ChatApplication
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: ChatApplication
+        tier: web
+    spec:
+      containers:
+      - name: chat-application
+        image: ${ACR_NAME}.azurecr.io/task5/chatservice:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: spring-chat-config
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: spring-chat-autoscaling
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: spring-chat-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+
